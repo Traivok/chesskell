@@ -11,10 +11,12 @@ instance Show Check where
 
 -----------------------------------------------------------------------------------------------
 data Move = Move { piece :: Piece, target :: Position } | 
-            Castling { color :: Color, side :: Bool }
+            --Castling { color :: Color, side :: Bool }
             --EnPassant?
             --Promotion?
             --Captures?
+instance Show Move where 
+    show = ""
 -----------------------------------------------------------------------------------------------
 data Board = Board { 
         pieces :: [Piece],
