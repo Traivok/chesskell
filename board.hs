@@ -8,14 +8,18 @@ data Check = Check | Mate
 instance Show Check where
     show Check = "+"
     show Mate  = "#"
+
 -----------------------------------------------------------------------------------------------
-data EnPassant = Maybe Position
------------------------------------------------------------------------------------------------
-data Move = Move { piece :: Piece, target :: Position }
------------------------------------------------------------------------------------------------
-data GameMove = GameMove { move :: Move, capture :: Bool }
+data Move = Move { piece :: Piece, target :: Position } | 
+            Castling { color :: Color, side :: Bool }
+            --EnPassant?
+            --Promotion?
+            --Captures?
 -----------------------------------------------------------------------------------------------
 data Board = Board { 
         pieces :: [Piece],
-        enPassant :: Maybe Position
+        --enPassantStatus :: Maybe EnPassant,
+        --whiteCastling :: CastlingStatus,
+        --blackCastling :: CastlingStatus,
+        check :: Maybe Check
     }
