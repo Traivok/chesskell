@@ -31,7 +31,7 @@ instance Monad Parser where
 
 instance Alternative Parser where
     empty   = Parser $ \s -> []
-    q <|> p = Parser (\inp -> case parse p inp of
+    p <|> q = Parser (\inp -> case parse p inp of
                         []         -> parse q inp
                         [(v, out)] -> [(v, out)]) 
 ---------------------------------------------------------------------------
