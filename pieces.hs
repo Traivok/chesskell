@@ -1,51 +1,64 @@
+--------------------------------------------------------------------------- 
 module Pieces where
-
-import Data.Char (ord, chr, toLower)
-import Data.Maybe(fromJust)
+--------------------------------------------------------------------------- 
+import Data.Char (ord, chr)
+import Data.Maybe (fromJust)
+import Data.List (find)
 import Parser
-
-class Evaluate a where eval :: a -> Double
+--------------------------------------------------------------------------- 
 class Validate a where valid :: a -> Bool
-
 --------------------------------------------------------------------------- 
---------------------------------------------------------------------------- 
-data Position = Position { col :: Int, row :: Int }
+data Square = Square { col :: Int, row :: Int }
     deriving Eq
 
-instance Show Position where
-    show (Position c r) = col : show (r + 1)
+instance Show Square where
+    show (Square c r) = col : show (r + 1)
         where col = (chr (c + ord 'a')) 
 
-instance Validate Position where
-    valid (Position col row) = (inRange col) && (inRange row)
+instance Validate Square where
+    valid (Square col row) = (inRange col) && (inRange row)
         where inRange p = 0 <= p && p <= 7
 
-readPos :: String -> Maybe Position
-readPos str = (\(col, row) -> Position ((ord col - ord 'a')) (ord row - ord '0')) <$> mparsed
+sameRow :: Square -> Square -> Bool
+sameRow (Square _1 c1) (Square _2 c2) = c1 == c2
+
+sameCol :: Square -> Square -> Bool
+sameCol (Square r1 _1) (Square r2 _2) = r1 == r2
+
+diffRow :: Square -> Square -> Int
+diffRow (Square _1 c1) (Square _2 c2) = abs $ c1 - c2
+
+diffCol :: Square -> Square -> Int
+diffCol (Square r1 _1) (Square r2 _2) = abs $ r1 - r2
+
+diff :: Square -> Square -> Square
+diff s1 s2 = let (dc, dr) = (diffCol s1 s2, diffRow s1 s2) in Square dc dr
+
+readSquare :: String -> Maybe Square
+readSquare str = (\(col, row) -> Square ((ord col - ord 'a')) (ord row - ord '0')) <$> mparsed
     where
     isCol c = ('a' <= c && c <= 'h')
     isRow r = ('1' <= r && r <= '8') 
     mparsed = maybeParse (pure (,) <*> (satisfy isCol) <*> (satisfy isRow) <* nil) str
 --------------------------------------------------------------------------- 
---------------------------------------------------------------------------- 
 data PieceType = King | Queen | Rook | Bishop | Knight | Pawn
     deriving (Eq, Enum)
-
-instance Evaluate PieceType where
-    eval = fromJust . (flip lookup [(King, 0), (Queen, 9), (Rook, 5), (Bishop, 3), (Knight, 2.8), (Pawn, 1)])
 
 instance Show PieceType where
     show = fromJust . (flip lookup [(King, "K"), (Queen, "Q"), (Rook, "R"), (Bishop, "B"), (Knight, "N"), (Pawn, "")])
 -------------------------------------------------------------------------- 
--- True for White, False for Black
-data Color = W | B
+data Color = White | Black
     deriving (Eq, Enum)
---------------------------------------------------------------------------- 
-data Piece = Piece { pieceType :: PieceType, color :: Color, pos :: Position }
+-------------------------------------------------------------------------- 
+data Piece = Piece { pieceType :: PieceType, color :: Color, pos :: Square }
     deriving Eq
 
-instance Evaluate Piece where
-    eval piece = if white then value else -value 
-        where
-        white = W == color piece 
-        value = eval $ pieceType piece
+instance Show Piece where 
+    show = show . pieceType
+
+findPiece :: [Piece] -> Square -> Maybe Piece
+findPiece pieces square = find sameSquare pieces
+    where sameSquare piece = pos piece == square
+
+isWhite :: Piece -> Bool
+isWhite p = color p == White
