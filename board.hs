@@ -11,25 +11,42 @@ instance Show Check where
     show Check     = "+"
     show Mate      = "#"
     --show Stalemate = ""
------------------------------------------------------------------------------------------------
-data CastlingStatus = CastlingStatus { kingSide :: Bool, queenSide :: Bool }
 
-instance Show CastlingStatus where
-    show (CastlingStatus False False) = ""
-    show (CastlingStatus True False)  = "K"
-    show (CastlingStatus False True)  = "Q"
-    show (CastlingStatus True True)   = "KQ"
 -----------------------------------------------------------------------------------------------
+data CastleStatus = CastleStatus { kingSide :: Bool, queenSide :: Bool }
+
+instance Show CastleStatus where
+    show (CastleStatus False False) = ""
+    show (CastleStatus False True ) = "Q"
+    show (CastleStatus True False ) = "K"
+    show (CastleStatus True True  ) = "KQ"
+----------------------------------------------------------------------------------------------
 data Board = Board { 
         pieces        :: [Piece],
         turn          :: Color,
         fullMove      :: Int,
         halfMove      :: Int,
-        enPassant     :: Maybe Square,
-        whiteCastling :: CastlingStatus,
-        blackCastling :: CastlingStatus
+        enPassant     :: Maybe Square
     }
-
+----------------------------------------------------------------------------------------------
+castleStatus :: Board -> Color -> CastleStatus
+castleStatus board color = CastleStatus (both && kingSide) (both && queenSide)
+    where
+        pred :: PieceType -> Color -> Piece -> Bool
+        pred t1 c1 (Piece t2 c2 pos m) = not m  && t1 == t2 && c1 == c2
+        -----
+        column :: Int -> Piece -> Bool 
+        column c = (== c) . (col . pos)
+        -----
+        rooks = filter (pred Rook color) (pieces board)
+        -----
+        both      = [] /= filter (pred King color) (pieces board)
+        kingSide  = [] /= filter (column 7) rooks
+        queenSide = [] /= filter (column 0) rooks
+----------------------------------------------------------------------------------------------
+checkSquare :: Board -> Square -> Maybe Piece
+checkSquare board square = find (\piece -> pos piece == square) $ pieces board
+----------------------------------------------------------------------------------------------
 pretty :: Board -> String
 pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer
     where
@@ -53,51 +70,28 @@ pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer
                 square  = Square c r
                 sqrtStr = case findPiece pieces square of
                     Nothing    -> "_"
-                    Just (Piece Pawn  White _2) -> "P"
-                    Just (Piece Pawn  Black _2) -> "p"
-                    Just (Piece pt White _2) -> show pt
-                    Just (Piece pt Black _2) -> map toLower $ show pt
+                    Just piece -> let str = if pieceType piece == Pawn 
+                                            then "P" 
+                                            else show $ pieceType piece  
+                                  in if color piece == White
+                                  then str
+                                  else map toLower str
 
 instance Show Board where show = pretty
 
 printStatus :: Board -> String
-printStatus (Board _1 t fm hm ep wc bc) = intersperse ' ' $ concat [turn, full, half, pass, cas]
+printStatus board@(Board _1 t fm hm ep) = concat $ intersperse " " [turn, full, half, pass, cas]
     where
         turn = if t == White then "w" else "b"
         full = show fm
         half = show hm
         pass = case ep of Nothing -> "-"; Just sqr -> show sqr 
-        wcas = show wc 
-        bcas = fmap toLower $ show bc 
+        wcas = show $ castleStatus board White  
+        bcas = fmap toLower $ show $ castleStatus board Black 
         cas  = if wcas == "" && bcas == "" then "-" else wcas ++ bcas
-
 -----------------------------------------------------------------------------------------------
 emptyBoard :: Board
-emptyBoard = Board [] White 0 1 Nothing cannotCastle cannotCastle
-    where cannotCastle = CastlingStatus False False
-
-makePawn :: Color -> Int -> Piece
-makePawn White col = Piece Pawn White (Square col 1)
-makePawn Black col = Piece Pawn Black (Square col 6)
-
-firstRank :: Color -> Int
-firstRank White = 0
-firstRank Black = 7
-
-make :: PieceType -> Color -> [Piece]
-make King   c = Piece King  c (Square 4 $ firstRank c) : []
-make Queen  c = Piece Queen c (Square 3 $ firstRank c) : []
-make Rook   c = map (\col -> Piece Rook   c (Square col $ firstRank c)) [0, 7]
-make Knight c = map (\col -> Piece Knight c (Square col $ firstRank c)) [1, 6]
-make Bishop c = map (\col -> Piece Bishop c (Square col $ firstRank c)) [2, 5]
-make Pawn   c = map (makePawn c) [0..7]
-
-makePiecesByColor :: Color -> [Piece]
-makePiecesByColor c = foldr (\piece acc -> (make piece c) ++ acc) [] [King .. Pawn]
-
-makePieces :: [Piece]
-makePieces = makePiecesByColor White ++ makePiecesByColor Black
+emptyBoard = Board [] White 0 1 Nothing 
 
 makeBoard :: Board
-makeBoard = Board makePieces White 0 1 Nothing cannotCastle cannotCastle 
-    where cannotCastle = CastlingStatus False False
+makeBoard = Board makePieces White 0 1 Nothing 

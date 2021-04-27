@@ -49,8 +49,12 @@ instance Show PieceType where
 -------------------------------------------------------------------------- 
 data Color = White | Black
     deriving (Eq, Enum)
+
+negColor :: Color -> Color
+negColor White = Black
+negColor Black = White
 -------------------------------------------------------------------------- 
-data Piece = Piece { pieceType :: PieceType, color :: Color, pos :: Square }
+data Piece = Piece { pieceType :: PieceType, color :: Color, pos :: Square, moved :: Bool }
     deriving Eq
 
 instance Show Piece where 
@@ -60,5 +64,28 @@ findPiece :: [Piece] -> Square -> Maybe Piece
 findPiece pieces square = find sameSquare pieces
     where sameSquare piece = pos piece == square
 
-isWhite :: Piece -> Bool
+isBlack, isWhite :: Piece -> Bool
 isWhite p = color p == White
+isBlack = not . isWhite
+-------------------------------------------------------------------------- 
+makePawn :: Color -> Int -> Piece
+makePawn White col = Piece Pawn White (Square col 1) False
+makePawn Black col = Piece Pawn Black (Square col 6) False
+
+firstRank :: Color -> Int
+firstRank White = 0
+firstRank Black = 7
+
+make :: PieceType -> Color -> [Piece]
+make King   c = Piece King  c (Square 4 $ firstRank c) False : []
+make Queen  c = Piece Queen c (Square 3 $ firstRank c) False : []
+make Rook   c = map (\col -> Piece Rook   c (Square col $ firstRank c) False) [0, 7]
+make Knight c = map (\col -> Piece Knight c (Square col $ firstRank c) False) [1, 6]
+make Bishop c = map (\col -> Piece Bishop c (Square col $ firstRank c) False) [2, 5]
+make Pawn   c = map (makePawn c) [0..7]
+
+makePiecesByColor :: Color -> [Piece]
+makePiecesByColor c = foldr (\piece acc -> (make piece c) ++ acc) [] [King .. Pawn]
+
+makePieces :: [Piece]
+makePieces = makePiecesByColor White ++ makePiecesByColor Black
