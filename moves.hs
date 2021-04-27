@@ -13,13 +13,14 @@ data Move = Move {
 ---------------------------------------------------------------------------
 --move :: Move -> Bool
 --move mv = case pieceType $ piece mv of
-    --Pawn   -> canPawnMove (piece mv) to 
-    --Knight -> knightMove from to 
-    --Bishop -> bishopMove from to 
-    --Rook   -> rookMove   from to 
-    --Queen  -> (rookMove  from to) || (bishopMove from to) 
-    --King   -> kingMove   from to 
+    --Pawn   -> canPawnMove pc to 
+    --Knight -> knightMove pc to 
+    --Bishop -> bishopMove pc to 
+    --Rook   -> rookMove   pc to 
+    --Queen  -> (rookMove  pc to) || (bishopMove pc to) 
+    --King   -> kingMove   pc to 
     --where
+        --pc = piece mv
         --to = dest mv
 ---------------------------------------------------------------------------
 pawnMoved :: Piece -> Bool

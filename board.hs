@@ -1,7 +1,7 @@
 module Board where
 
 import Pieces
-import Data.List (find)
+import Data.List (find, intersperse)
 import Data.Char (toLower)
 -----------------------------------------------------------------------------------------------
 data Check = Check | Mate -- | StaleMate
@@ -12,21 +12,30 @@ instance Show Check where
     show Mate      = "#"
     --show Stalemate = ""
 -----------------------------------------------------------------------------------------------
-data Sides = QueenSide | KingSide
------------------------------------------------------------------------------------------------
-data CastlingStatus = CastlingStatus { queenSide :: Bool, kingSide :: Bool }
+data CastlingStatus = CastlingStatus { kingSide :: Bool, queenSide :: Bool }
+
+instance Show CastlingStatus where
+    show (CastlingStatus False False) = ""
+    show (CastlingStatus True False)  = "K"
+    show (CastlingStatus False True)  = "Q"
+    show (CastlingStatus True True)   = "KQ"
 -----------------------------------------------------------------------------------------------
 data Board = Board { 
-        pieces :: [Piece],
-        enPassant :: Maybe Square,
+        pieces        :: [Piece],
+        turn          :: Color,
+        fullMove      :: Int,
+        halfMove      :: Int,
+        enPassant     :: Maybe Square,
         whiteCastling :: CastlingStatus,
-        blackCastling :: CastlingStatus,
-        check :: Maybe Check
+        blackCastling :: CastlingStatus
     }
 
 pretty :: Board -> String
-pretty board = unlines $ "  _ _ _ _ _ _ _ _":(pretty' 7 $ pieces board) ++ ["  a b c d e f g h"]
+pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer
     where
+        header = "  _ _ _ _ _ _ _ _"
+        footer = ["  a b c d e f g h", printStatus board] 
+        -----
         pretty' :: Int -> [Piece] -> [String]
         pretty' 0 pieces = [prettyRow 0 pieces]
         pretty' r pieces = prettyRow r pieces : pretty' (r - 1) pieces
@@ -51,9 +60,20 @@ pretty board = unlines $ "  _ _ _ _ _ _ _ _":(pretty' 7 $ pieces board) ++ ["  a
 
 instance Show Board where show = pretty
 
+printStatus :: Board -> String
+printStatus (Board _1 t fm hm ep wc bc) = intersperse ' ' $ concat [turn, full, half, pass, cas]
+    where
+        turn = if t == White then "w" else "b"
+        full = show fm
+        half = show hm
+        pass = case ep of Nothing -> "-"; Just sqr -> show sqr 
+        wcas = show wc 
+        bcas = fmap toLower $ show bc 
+        cas  = if wcas == "" && bcas == "" then "-" else wcas ++ bcas
+
 -----------------------------------------------------------------------------------------------
 emptyBoard :: Board
-emptyBoard = Board [] Nothing cannotCastle cannotCastle Nothing
+emptyBoard = Board [] White 0 1 Nothing cannotCastle cannotCastle
     where cannotCastle = CastlingStatus False False
 
 makePawn :: Color -> Int -> Piece
@@ -79,5 +99,5 @@ makePieces :: [Piece]
 makePieces = makePiecesByColor White ++ makePiecesByColor Black
 
 makeBoard :: Board
-makeBoard = Board makePieces Nothing cannotCastle cannotCastle Nothing
+makeBoard = Board makePieces White 0 1 Nothing cannotCastle cannotCastle 
     where cannotCastle = CastlingStatus False False
