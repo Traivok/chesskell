@@ -24,8 +24,8 @@ instance Show CastleStatus where
 data Board = Board { 
         pieces        :: [Piece],
         turn          :: Color,
-        fullMove      :: Int,
         halfMove      :: Int,
+        fullMove      :: Int,
         enPassant     :: Maybe Square
     }
 ----------------------------------------------------------------------------------------------
@@ -70,22 +70,39 @@ pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer
                 square  = Square c r
                 sqrtStr = case findPiece pieces square of
                     Nothing    -> "_"
-                    Just piece -> let str = if pieceType piece == Pawn 
-                                            then "P" 
-                                            else show $ pieceType piece  
-                                  in if color piece == White
-                                  then str
-                                  else map toLower str
-
-instance Show Board where show = pretty
+                    Just piece -> show piece 
+-----------------------------------------------------------------------------------------------
+fen :: Board -> String
+fen board = (absFen 7 $ pieces board) ++ " " ++ printStatus board 
+    where
+        absFen :: Int -> [Piece] -> String
+        absFen 0 p = fenRow 0 p 
+        absFen n p = fenRow n p ++ '/':(absFen (n - 1) p)
+        -----
+        fenRow :: Int -> [Piece] -> String
+        fenRow n pieces = fenCol 0 n pieces 0
+         -----
+        fenCol :: Int -> Int -> [Piece] -> Int -> String
+        fenCol c r pieces last = if valid square 
+                                 then curr ++ next
+                                 else lastStr
+            where
+                square = Square c r
+                lastStr = if last == 0 then "" else show last
+                curr = case findPiece pieces square of
+                    Nothing    -> ""
+                    Just piece -> lastStr ++ show piece
+                next = fenCol (c + 1) r pieces (if findPiece pieces square == Nothing then last + 1 else 0) 
+            
+instance Show Board where show = fen
 
 printStatus :: Board -> String
-printStatus board@(Board _1 t fm hm ep) = concat $ intersperse " " [turn, full, half, pass, cas]
+printStatus board = concat $ intersperse " " [wOrB, cas, pass, half, full]
     where
-        turn = if t == White then "w" else "b"
-        full = show fm
-        half = show hm
-        pass = case ep of Nothing -> "-"; Just sqr -> show sqr 
+        wOrB = if turn board == White then "w" else "b"
+        full = show $ fullMove board
+        half = show $ halfMove board
+        pass = case enPassant board of Nothing -> "-"; Just sqr -> show sqr 
         wcas = show $ castleStatus board White  
         bcas = fmap toLower $ show $ castleStatus board Black 
         cas  = if wcas == "" && bcas == "" then "-" else wcas ++ bcas

@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------- 
 module Pieces where
 --------------------------------------------------------------------------- 
-import Data.Char (ord, chr)
+import Data.Char (ord, chr, toLower)
 import Data.Maybe (fromJust)
 import Data.List (find)
 import Parser
@@ -45,7 +45,7 @@ data PieceType = King | Queen | Rook | Bishop | Knight | Pawn
     deriving (Eq, Enum)
 
 instance Show PieceType where
-    show = fromJust . (flip lookup [(King, "K"), (Queen, "Q"), (Rook, "R"), (Bishop, "B"), (Knight, "N"), (Pawn, "")])
+    show = fromJust . (flip lookup [(King, "K"), (Queen, "Q"), (Rook, "R"), (Bishop, "B"), (Knight, "N"), (Pawn, "P")])
 -------------------------------------------------------------------------- 
 data Color = White | Black
     deriving (Eq, Enum)
@@ -58,7 +58,7 @@ data Piece = Piece { pieceType :: PieceType, color :: Color, pos :: Square, move
     deriving Eq
 
 instance Show Piece where 
-    show = show . pieceType
+    show piece = let str = show $ pieceType piece in if isWhite piece then str else map toLower str
 
 findPiece :: [Piece] -> Square -> Maybe Piece
 findPiece pieces square = find sameSquare pieces
