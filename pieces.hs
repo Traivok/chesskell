@@ -2,7 +2,7 @@
 module Pieces where
 --------------------------------------------------------------------------- 
 import Data.Char (ord, chr, toLower)
-import Data.Maybe (fromJust)
+import Data.Maybe (isNothing, fromJust)
 import Data.List (find)
 import Parser
 --------------------------------------------------------------------------- 
@@ -14,6 +14,12 @@ data Square = Square { col :: Int, row :: Int }
 instance Show Square where
     show (Square c r) = col : show (r + 1)
         where col = (chr (c + ord 'a')) 
+
+squareToTuple :: Square -> (Int, Int)
+squareToTuple (Square c r) = (c, r)
+
+tupleToSquare :: (Int, Int) -> Square
+tupleToSquare (c, r) = Square c r
 
 instance Validate Square where
     valid (Square col row) = (inRange col) && (inRange row)
@@ -57,12 +63,16 @@ negColor Black = White
 data Piece = Piece { pieceType :: PieceType, color :: Color, pos :: Square, moved :: Bool }
     deriving Eq
 
+-- Debug only, show move for alg. notation
 instance Show Piece where 
-    show piece = let str = show $ pieceType piece in if isWhite piece then str else map toLower str
+    show piece = (let str = show $ pieceType piece in if isWhite piece then str else map toLower str) ++ (show $ pos piece)
 
 findPiece :: [Piece] -> Square -> Maybe Piece
 findPiece pieces square = find sameSquare pieces
     where sameSquare piece = pos piece == square
+
+emptySquare :: [Piece] -> Square -> Bool
+emptySquare = (isNothing .) . findPiece 
 
 isBlack, isWhite :: Piece -> Bool
 isWhite p = color p == White

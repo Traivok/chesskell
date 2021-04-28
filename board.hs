@@ -70,7 +70,7 @@ pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer
                 square  = Square c r
                 sqrtStr = case findPiece pieces square of
                     Nothing    -> "_"
-                    Just piece -> show piece 
+                    Just piece -> show $ pieceType piece 
 -----------------------------------------------------------------------------------------------
 fen :: Board -> String
 fen board = (absFen 7 $ pieces board) ++ " " ++ printStatus board 
@@ -91,7 +91,7 @@ fen board = (absFen 7 $ pieces board) ++ " " ++ printStatus board
                 lastStr = if last == 0 then "" else show last
                 curr = case findPiece pieces square of
                     Nothing    -> ""
-                    Just piece -> lastStr ++ show piece
+                    Just piece -> lastStr ++ (show $ pieceType piece)
                 next = fenCol (c + 1) r pieces (if findPiece pieces square == Nothing then last + 1 else 0) 
             
 instance Show Board where show = fen

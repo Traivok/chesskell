@@ -24,95 +24,109 @@ data Move = Move {
         --to = dest mv
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
-pawnMove, knightMove, bishopMove, rookMove, queenMove, kingMove :: Piece -> Square -> Bool
+pawnDelta, knightDelta, bishopDelta, rookDelta, queenDelta, kingDelta :: Piece -> Square -> Bool
 ---------------------------------------------------------------------------
-pawnMove (Piece Pawn c from m) to = valid to && sameColumn && (advanceOne || advanceTwo)
+pawnDelta (Piece Pawn c from m) to = sameColumn && (advanceOne || advanceTwo)
     where
         sameColumn = sameCol from to
         advanceOne = diffRow from to == 1
         advanceTwo = not m && diffRow from to == 2
-pawnMove _ _ = False
+pawnDelta _ _ = False
 ---------------------------------------------------------------------------
-knightMove (Piece Knight _ from _) to = valid to && (dx, dy) `elem` [(1, 2), (2, 1)]
+knightDelta (Piece Knight _ from _) to = (dx, dy) `elem` [(1, 2), (2, 1)]
     where
         dx = diffRow from to
         dy = diffCol from to
-knightMove _ _ = False
+knightDelta _ _ = False
 ---------------------------------------------------------------------------
-bishopMove (Piece Bishop _ from _) to = valid to && dx /= 0 && dx == dy
+bishopDelta (Piece Bishop _ from _) to = dx /= 0 && dx == dy
      where
         dx = diffRow from to
         dy = diffCol from to
-bishopMove _ _ = False
+bishopDelta _ _ = False
 ---------------------------------------------------------------------------
-rookMove (Piece Rook _ from _) to = valid to && ((dx == 0 && dy /= 0) || (dx /= 0 && dy == 0))
+rookDelta (Piece Rook _ from _) to = (dx == 0 && dy /= 0) || (dx /= 0 && dy == 0)
      where
         dx = diffRow from to
         dy = diffCol from to
-rookMove _ _ = False
+rookDelta _ _ = False
 ---------------------------------------------------------------------------
-queenMove (Piece Queen c p m) to = rookMove (Piece Rook c p m) to || 
-                                   bishopMove (Piece Bishop c p m) to
-queenMove _ _ = False
+queenDelta (Piece Queen c p m) to = rookDelta (Piece Rook c p m) to || 
+                                    bishopDelta (Piece Bishop c p m) to
+queenDelta _ _ = False
 ---------------------------------------------------------------------------
-kingMove (Piece King _ from _) to = valid to && (dx, dy) /= (0, 0) 
-                                          && ((dx == 1 && dy <= 1) || (dx <= 1 && dy == 1))
+kingDelta (Piece King _ from _) to = (dx == 1 && dy <= 1) || (dx <= 1 && dy == 1)
     where
         dx = diffRow from to
         dy = diffCol from to
-kingMove _ _ = True
+kingDelta _ _ = True
+---------------------------------------------------------------------------
+checkDeltasAndBound :: Piece -> Square -> Bool
+checkDeltasAndBound piece to = valid to &&  case pieceType piece of 
+    Pawn   -> pawnDelta   piece to
+    Knight -> knightDelta piece to 
+    Bishop -> bishopDelta piece to 
+    Rook   -> rookDelta   piece to
+    Queen  -> queenDelta  piece to 
+    King   -> kingDelta   piece to
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
-data Direction = DirLeft | DirRight | Up | Down | NE | NW | SE | SW
+-- Returns available squares and capture 
+howFar :: (Square -> Square) -> Board -> Color -> Square -> ([Square], Maybe Piece) 
+howFar stepper board myColor from = let to = stepper from in case findPiece (pieces board) to of
+    Nothing    -> let res = howFar stepper board myColor to in (to : (fst res), snd res)
+    Just piece -> if (color piece == myColor) then ([], Nothing) else ([to], Just piece)
 
-moveGen :: Direction -> Square -> Square
-moveGen DirLeft  (Square c r) = Square (c - 1) r
-moveGen DirRight (Square c r) = Square (c + 1) r
---
-moveGen Up   (Square c r) = Square  c (r + 1)
-moveGen Down (Square c r) = Square  c (r - 1)
---
-moveGen NE sq = ((moveGen Up)   . (moveGen DirRight)) sq
-moveGen NW sq = ((moveGen Up)   . (moveGen DirLeft )) sq
-moveGen SE sq = ((moveGen Down) . (moveGen DirRight)) sq
-moveGen SW sq = ((moveGen Down) . (moveGen DirLeft )) sq
-
 ---------------------------------------------------------------------------
-findDir :: Square -> Square -> Direction
-findDir (Square c1 r1) (Square c2 r2) | dc == 0 && dr >  0 = Up
-                                      | dc == 0 && dr <  0 = Down 
-                                      | dc >  0 && dr == 0 = DirRight 
-                                      | dc <  0 && dr == 0 = DirLeft
-                                      | dc >  0 && dr >  0 = NE
-                                      | dc <  0 && dr >  0 = NW
-                                      | dc >  0 && dr <  0 = SE
-                                      | dc <  0 && dr <  0 = SW
-                                      | otherwise          = error "Same square"
+---------------------------------------------------------------------------
+pawnMoves :: Board -> Piece -> [(Square, Maybe Piece)]
+pawnMoves board piece = if pieceType piece == Pawn then moves else []
+    where moves = (pawnAdvance board piece) ++ (pawnCapture board piece) ++ (pawnEnPassant board piece)
+
+pawnNext :: Color -> Square -> Square
+pawnNext White (Square c r) = Square c $ r + 1
+pawnNext Black (Square c r) = Square c $ r - 1
+
+pawnCap :: Bool -> Color -> Square -> Square
+pawnCap left White (Square c r) = Square (if left then c - 1 else c + 1) $ r + 1
+pawnCap left Black (Square c r) = Square (if left then c - 1 else c + 1) $ r - 1
+
+pawnAdvance :: Board -> Piece -> [(Square, Maybe Piece)]
+pawnAdvance board (Piece Pawn color from moved) | emptySquare (pieces board) adv1 && (not moved) && emptySquare (pieces board) adv2 = [(adv1, Nothing), (adv2, Nothing)]
+                                                | emptySquare (pieces board) adv1 = [(adv1, Nothing)]
+                                                | otherwise                   = []
     where 
-        dc = c2 - c1
-        dr = r2 - r1
+        adv1 = pawnNext color from
+        adv2 = pawnNext color adv1 
+pawnAdvance _ _ = []
 
----------------------------------------------------------------------------
----------------------------------------------------------------------------
-block :: (Square -> Square) -> Color -> Board -> Square -> Int -> Bool
-block next myColor board from n | n > 0     = (not $ valid from') && empty && block next myColor board from' (n-1)
-                                | otherwise = empty || (captureAvailable square)
-            where
-                from'   = next from 
-                square  = checkSquare board from'
-                empty   = square == Nothing
-                captureAvailable (Just piece) = (negColor $ color piece) == myColor 
-                captureAvailable Nothing      = True 
+pawnCapture :: Board -> Piece -> [(Square, Maybe Piece)]
+pawnCapture board (Piece Pawn c from _) = filter check [(left, findPiece enemies left), (right, findPiece enemies right)]
+    where
+        enemies = filter (\p -> color p /= c) $ pieces board
+        left  = pawnCap True  c from
+        right = pawnCap False c from
+        check :: (Square, Maybe Piece) -> Bool
+        check (_, Nothing) = False
+        check (square, _)  = valid square 
+pawnCapture _ _ = []
 
---blockPawn   :: Color -> Board -> Square -> Int -> Bool
---blockKnight :: Color -> Board -> Square -> Int -> Bool
---blockBishop 
---blockRook
---blockQueen
---blockKing
----------------------------------------------------------------------------
--- pawnCapture :: ?
----------------------------------------------------------------------------
---moves :: Piece -> Board -> [(Move, Board)]
+enPassToPos :: Square -> Square
+enPassToPos (Square c 2) = Square c 3
+enPassToPos (Square c 5) = Square c 4 
+enPassToPos square       = error $ "Invalid En Passant Square " ++ show square
 
---check :: Board -> Maybe CheckStatus
+pawnEnPassant :: Board -> Piece -> [(Square, Maybe Piece)]
+pawnEnPassant board (Piece Pawn c from _) = if fifthRank then move else []
+    where 
+        fifthRank = let r = row from in (r == 4 && c == White) || (r == 3 && c == Black)
+        adjacency p = 1 == diffCol from (pos p) 
+        enPass = case enPassant board of
+            Nothing     -> []
+            Just square -> [(square, findPiece (pieces board) (enPassToPos square))] 
+        move = case enPass of
+            []                  -> []
+            [(square, Nothing)] -> error $ "Invalid En Passant " ++ show square
+            [(square, Just p)]  -> if color p /= c && adjacency p then [(square, Just p)] else []
+pawnEnPassant _ _ = []
+
