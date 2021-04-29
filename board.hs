@@ -70,7 +70,7 @@ pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer
                 square  = Square c r
                 sqrtStr = case findPiece pieces square of
                     Nothing    -> "_"
-                    Just piece -> show $ pieceType piece 
+                    Just (Piece tp c _ _) -> if c == White then show tp else map toLower $ show tp
 -----------------------------------------------------------------------------------------------
 fen :: Board -> String
 fen board = (absFen 7 $ pieces board) ++ " " ++ printStatus board 
@@ -94,7 +94,7 @@ fen board = (absFen 7 $ pieces board) ++ " " ++ printStatus board
                     Just piece -> lastStr ++ (show $ pieceType piece)
                 next = fenCol (c + 1) r pieces (if findPiece pieces square == Nothing then last + 1 else 0) 
             
-instance Show Board where show = fen
+instance Show Board where show = pretty
 
 printStatus :: Board -> String
 printStatus board = concat $ intersperse " " [wOrB, cas, pass, half, full]
@@ -112,3 +112,35 @@ emptyBoard = Board [] White 0 1 Nothing
 
 makeBoard :: Board
 makeBoard = Board makePieces White 0 1 Nothing 
+
+makeKingsPawn = Board pcs Black 0 1 $ Just $ Square 4 2 
+    where 
+        pcs = map f makePieces
+        f p@(Piece tp c sq m) = if sq == (Square 4 1) then (Piece tp c (Square 4 3) True) else p
+        
+makeEnPassAvailable = Board pcs White 0 3 $ Just $ Square 5 5 
+    where
+        pcs = news ++ olds
+        news = [(Piece Pawn White (Square 4 4) True), (Piece Pawn Black (Square 3 5) True), (Piece Pawn Black (Square 5 4) True)]
+        olds :: [Piece]
+        olds = filter f makePieces
+        f :: Piece -> Bool
+        f p = not $ pos p `elem` [(Square 4 1), (Square 3 6), (Square 5 6)]
+
+makeCheck = Board [wKing, wQueen, bKing] Black 5 60 Nothing
+    where
+        wKing  = Piece King  White (Square 7 5) True 
+        wQueen = Piece Queen White (Square 5 5) True 
+        bKing  = Piece King  Black (Square 7 7) True 
+
+makeCheckMate = Board [wKing, wQueen, bKing] Black 5 60 Nothing
+    where
+        wKing  = Piece King  White (Square 7 5) True 
+        wQueen = Piece Queen White (Square 6 6) True 
+        bKing  = Piece King  Black (Square 7 7) True 
+
+makeStaleMate = Board [wKing, wQueen, bKing] Black 5 60 Nothing
+    where
+        wKing  = Piece King  White (Square 7 5) True 
+        wQueen = Piece Queen White (Square 5 6) True 
+        bKing  = Piece King  Black (Square 7 7) True 
