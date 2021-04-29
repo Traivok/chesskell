@@ -117,7 +117,7 @@ makeKingsPawn = Board pcs Black 0 1 $ Just $ Square 4 2
     where 
         pcs = map f makePieces
         f p@(Piece tp c sq m) = if sq == (Square 4 1) then (Piece tp c (Square 4 3) True) else p
-        
+-----------------------------------------------------------------------------------------------
 makeEnPassAvailable = Board pcs White 0 3 $ Just $ Square 5 5 
     where
         pcs = news ++ olds
@@ -126,7 +126,7 @@ makeEnPassAvailable = Board pcs White 0 3 $ Just $ Square 5 5
         olds = filter f makePieces
         f :: Piece -> Bool
         f p = not $ pos p `elem` [(Square 4 1), (Square 3 6), (Square 5 6)]
-
+-----------------------------------------------------------------------------------------------
 makeCheck = Board [wKing, wQueen, bKing] Black 5 60 Nothing
     where
         wKing  = Piece King  White (Square 7 5) True 
@@ -144,3 +144,27 @@ makeStaleMate = Board [wKing, wQueen, bKing] Black 5 60 Nothing
         wKing  = Piece King  White (Square 7 5) True 
         wQueen = Piece Queen White (Square 5 6) True 
         bKing  = Piece King  Black (Square 7 7) True 
+-----------------------------------------------------------------------------------------------
+makeCastleAttack = Board pcs White 5 60 Nothing        
+    where
+        pcs = wKing ++ wRooks ++ bKing ++ bRooks ++ attackers
+        wKing  = make King White
+        wRooks = make Rook White
+        bKing  = make King Black
+        bRooks = make Rook Black
+        attackers = map (\c -> Piece Rook Black (Square c 2) True) [2, 3, 5, 6]
+
+makeCastleAvailable = Board pcs White 5 60 Nothing
+    where
+        pcs = wPawns ++ bPawns ++ (pieces makeCastleAttack)
+        wPawns = make Pawn White
+        bPawns = make Pawn Black
+
+makeCastleBlock = Board pcs White 5 60 Nothing        
+    where
+        pcs = (make King Black) ++ (make King White) ++ (make Rook Black) ++ (make Rook White) ++ (make Knight White) ++ (make Knight Black)
+    
+makeCastleCheck = Board pcs White 5 60 Nothing        
+    where
+        pcs = (make King Black) ++ (make King White) ++ (make Rook Black) ++ (make Rook White) ++ [Piece Queen Black (Square 4 3) True, Piece Queen White (Square 4 4) True]
+ 

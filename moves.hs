@@ -3,7 +3,7 @@ module Moves where
 import Parser
 import Pieces
 import Board
-import Data.Maybe (fromJust, isNothing)
+import Data.Maybe (fromJust, isJust, isNothing)
 import Data.List (find)
 ---------------------------------------------------------------------------
 data Move = Move { piece :: Piece, square :: Square, capturing :: Maybe Piece }                              |
@@ -23,12 +23,13 @@ threats :: Board -> Color -> [Move]
 threats board attackerColor = filter captures $ concat $ map (pieceMoves board) $ filter (\p -> color p == attackerColor) $ pieces board
     where 
         captures :: Move -> Bool
+        captures _ = True
         captures (Move p square (Just cap))        = color p == attackerColor
         captures (Promotion p square (Just cap) _) = color p == attackerColor
         captures _                                 = False
 
 inCheck :: Board -> Color -> Bool
-inCheck board kingColor = not $ isNothing $ find findMyKing $ threats board $ negColor kingColor
+inCheck board kingColor = isJust $ find findMyKing $ threats board $ negColor kingColor
     where 
         findMyKing :: Move -> Bool
         findMyKing (Move      p square (Just (Piece King _ _ _))   ) = True 
@@ -36,10 +37,10 @@ inCheck board kingColor = not $ isNothing $ find findMyKing $ threats board $ ne
         findMyKing _                                                 = False
 
 attacked :: Board -> Color -> Square -> Bool
-attacked board attackerColor = (>0) . length . (squareAttacked board attackerColor)
+attacked board attackerColor = (>0) . length . (attacks board attackerColor)
 
-squareAttacked :: Board -> Color -> Square -> [Move]
-squareAttacked (Board pcs t hm fm ep) attackerColor target = filter captures $ concat $ map (pieceMoves board') $ filter (\p -> color p == attackerColor) $ pieces'
+attacks :: Board -> Color -> Square -> [Move]
+attacks (Board pcs t hm fm ep) attackerColor target = filter captures $ concat $ map (pieceMoves board') $ filter (\p -> color p == attackerColor) $ pieces'
     where 
         pieces' = (Piece Pawn (negColor attackerColor) target True) : (filter (\p -> pos p /= target) pcs)
         board'  = Board pieces' t hm fm ep
@@ -110,7 +111,7 @@ queenMoves board queen = if pieceType queen == Queen then moves else []
 ---------------------------------------------------------------------------
 -- King Move
 kingMoves :: Board -> Piece -> [Move]
-kingMoves board king = if pieceType king == King then moves ++ (castles board king) else []
+kingMoves board king = if pieceType king == King then moves else []
     where
         moves = map fromJust $ filter (not . isNothing) $ map toMove squares
         squares :: [Square]
@@ -122,7 +123,30 @@ kingMoves board king = if pieceType king == King then moves ++ (castles board ki
                 Just p  -> if color p == color king then Nothing else Just (Move king square (Just p))
 
 castles :: Board -> Piece -> [Move]
-castles board king = []
+castles board king@(Piece King c _ False) = if (inCheck board c) then [] else queenCastle ++ kingCastle
+    where 
+        firstRank = if c == White then 0 else 7
+        allFalse = foldr (||) False
+        --
+        pathBlocked, pathAttacked :: [Square] -> Bool
+        pathBlocked squares  = 0 /= (length $ filter (\p -> pos p `elem` squares) $ pieces board)
+        pathAttacked squares = allFalse $ map (attacked board (negColor c)) $ squares
+        findRook :: Int -> Maybe Piece
+        findRook col = findPiece (pieces board) (Square col firstRank) 
+        rookAv :: Int -> Bool
+        rookAv col = case findRook col of
+                     Nothing -> False
+                     Just p  -> color p == c && pieceType p == Rook && (not $ moved p)
+        --
+        queenSideKingPath = [ Square 2 firstRank, Square 3 firstRank]
+        queenSideRookPath = (Square 1 firstRank) : queenSideKingPath
+        queenSideAv = (not $ pathBlocked queenSideRookPath) && (not $ pathAttacked queenSideKingPath) && (rookAv 0)
+        queenCastle = if not queenSideAv then [] else [Castle king $ fromJust $ findRook 0]
+        --
+        kingSidePath = [Square 5 firstRank, Square 6 firstRank]
+        kingSideAv = (not $ pathBlocked kingSidePath) && (not $ pathAttacked kingSidePath) && (rookAv 7)
+        kingCastle = if not kingSideAv then [] else [Castle king $ fromJust $ findRook 7]
+castles _ _ = []
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
