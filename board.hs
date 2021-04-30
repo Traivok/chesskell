@@ -162,7 +162,7 @@ makeCastleAvailable = Board pcs White 5 60 Nothing
 
 makeCastleBlock = Board pcs White 5 60 Nothing        
     where
-        pcs = (make King Black) ++ (make King White) ++ (make Rook Black) ++ (make Rook White) ++ (make Knight White) ++ (make Knight Black)
+        pcs = (make King Black) ++ (make King White) ++ (make Rook Black) ++ (make Rook White) ++ [Piece Knight Black (Square 1 0) True] ++ (make Knight Black)
     
 makeCastleCheck = Board pcs White 5 60 Nothing        
     where

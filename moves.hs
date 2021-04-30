@@ -15,15 +15,13 @@ instance Show Move where
     show (Promotion piece square capture promotion) = show (pieceType piece) ++ (if isNothing capture then "" else "x") ++ (show square) ++ ("=" ++ show promotion)
     show (Castle _ (Piece Rook _ (Square c _) _)) = if c == 0 then "O-O-O" else "O-O"
 ---------------------------------------------------------------------------
---move :: Board -> Move -> Board
-
---move board (Move piece, square, Nothing) = 
+--allowedMoves :: Board -> Piece -> [Move]
+--applyToBoard :: Board -> Move -> Board
 
 threats :: Board -> Color -> [Move]
 threats board attackerColor = filter captures $ concat $ map (pieceMoves board) $ filter (\p -> color p == attackerColor) $ pieces board
     where 
         captures :: Move -> Bool
-        captures _ = True
         captures (Move p square (Just cap))        = color p == attackerColor
         captures (Promotion p square (Just cap) _) = color p == attackerColor
         captures _                                 = False
@@ -36,6 +34,11 @@ inCheck board kingColor = isJust $ find findMyKing $ threats board $ negColor ki
         findMyKing (Promotion p square (Just (Piece King _ _ _)) _ ) = True 
         findMyKing _                                                 = False
 
+-- inCheckMate :: Board -> Color -> Bool
+-- inCheck && allowedMoves == []
+-- staleMate = allowerdMoves = [] && (not inCheck)
+
+---------------------------------------------------------------------------
 attacked :: Board -> Color -> Square -> Bool
 attacked board attackerColor = (>0) . length . (attacks board attackerColor)
 
@@ -126,11 +129,11 @@ castles :: Board -> Piece -> [Move]
 castles board king@(Piece King c _ False) = if (inCheck board c) then [] else queenCastle ++ kingCastle
     where 
         firstRank = if c == White then 0 else 7
-        allFalse = foldr (||) False
+        anyTrue = foldr (||) False
         --
         pathBlocked, pathAttacked :: [Square] -> Bool
         pathBlocked squares  = 0 /= (length $ filter (\p -> pos p `elem` squares) $ pieces board)
-        pathAttacked squares = allFalse $ map (attacked board (negColor c)) $ squares
+        pathAttacked squares = anyTrue $ map (attacked board (negColor c)) $ squares
         findRook :: Int -> Maybe Piece
         findRook col = findPiece (pieces board) (Square col firstRank) 
         rookAv :: Int -> Bool
