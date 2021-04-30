@@ -15,8 +15,33 @@ instance Show Move where
     show (Promotion piece square capture promotion) = show (pieceType piece) ++ (if isNothing capture then "" else "x") ++ (show square) ++ ("=" ++ show promotion)
     show (Castle _ (Piece Rook _ (Square c _) _)) = if c == 0 then "O-O-O" else "O-O"
 ---------------------------------------------------------------------------
---allowedMoves :: Board -> Piece -> [Move]
 --applyToBoard :: Board -> Move -> Board
+--applyToBoard (Board pieces turn halfMoves fullMoves enPassant) (Castle k@(Piece King kingColor kingSquare _) r@(Piece Rook rookColor rookSquare _)) = board' 
+    --where
+        --board' = Board pieces' (negColor turn) (halfMoves + 1) (if turn == Black then fullMoves + 1 else fullMoves) Nothing
+        ----
+        --mv :: Piece -> PieceType -> Piece
+        --mv p@(Piece tp cl (Square _ r) _) side = Piece tp cl (Square (getCol p side) r) True
+        ----
+        --kingCol, rookCol :: PieceType -> Int
+        --kingCol side = if side == King then 6 else 2
+        --rookCol side = if side == King then 5 else 3
+        --getCol :: Piece -> PieceType -> Int
+        --getCol piece = if pieceType piece == King then kingCol else rookCol
+        ----
+        --castleSide :: PieceType
+        --castleSide = if 0 == col $ pos r then Queen else King
+        --pieces' :: [Piece]
+        --pieces' = (filter (\p -> p `elem` [k, q]) pieces) ++ [mv k castleSide, mv r castleSide]
+--applyToBoard (Board pieces turn halfMoves fullMoves enPassant) m@(Promotion piece square capturing promotion) = board'
+    --where
+        --board' = Board pieces' (negColor turn) (halfMoves') (if turn == Black then fullMoves + 1 else fullMoves) Nothing
+        ----
+        ----
+        --halfMoves' = if isCapture m || pieceType piece == Pawn then 0 else halfMoves + 1
+
+
+--allowedMoves :: Board -> Piece -> [Move]
 
 threats :: Board -> Color -> [Move]
 threats board attackerColor = filter captures $ concat $ map (pieceMoves board) $ filter (\p -> color p == attackerColor) $ pieces board
@@ -38,6 +63,9 @@ inCheck board kingColor = isJust $ find findMyKing $ threats board $ negColor ki
 -- inCheck && allowedMoves == []
 -- staleMate = allowerdMoves = [] && (not inCheck)
 
+isCapture :: Move -> Bool
+isCapture (Castle _ _) = False
+isCapture move        = isJust $ capturing move
 ---------------------------------------------------------------------------
 attacked :: Board -> Color -> Square -> Bool
 attacked board attackerColor = (>0) . length . (attacks board attackerColor)
