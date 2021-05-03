@@ -3,7 +3,7 @@ module Moves where
 import Parser
 import Pieces
 import Board
-import Data.Maybe (fromJust, isJust, isNothing)
+import Data.Maybe (fromJust, isJust, isNothing, maybeToList)
 import Data.List (find)
 ---------------------------------------------------------------------------
 data Move = Move { piece :: Piece, square :: Square, capturing :: Maybe Piece }                              |
@@ -15,31 +15,44 @@ instance Show Move where
     show (Promotion piece square capture promotion) = show (pieceType piece) ++ (if isNothing capture then "" else "x") ++ (show square) ++ ("=" ++ show promotion)
     show (Castle _ (Piece Rook _ (Square c _) _)) = if c == 0 then "O-O-O" else "O-O"
 ---------------------------------------------------------------------------
---applyToBoard :: Board -> Move -> Board
---applyToBoard (Board pieces turn halfMoves fullMoves enPassant) (Castle k@(Piece King kingColor kingSquare _) r@(Piece Rook rookColor rookSquare _)) = board' 
-    --where
-        --board' = Board pieces' (negColor turn) (halfMoves + 1) (if turn == Black then fullMoves + 1 else fullMoves) Nothing
-        ----
-        --mv :: Piece -> PieceType -> Piece
-        --mv p@(Piece tp cl (Square _ r) _) side = Piece tp cl (Square (getCol p side) r) True
-        ----
-        --kingCol, rookCol :: PieceType -> Int
-        --kingCol side = if side == King then 6 else 2
-        --rookCol side = if side == King then 5 else 3
-        --getCol :: Piece -> PieceType -> Int
-        --getCol piece = if pieceType piece == King then kingCol else rookCol
-        ----
-        --castleSide :: PieceType
-        --castleSide = if 0 == col $ pos r then Queen else King
-        --pieces' :: [Piece]
-        --pieces' = (filter (\p -> p `elem` [k, q]) pieces) ++ [mv k castleSide, mv r castleSide]
---applyToBoard (Board pieces turn halfMoves fullMoves enPassant) m@(Promotion piece square capturing promotion) = board'
-    --where
-        --board' = Board pieces' (negColor turn) (halfMoves') (if turn == Black then fullMoves + 1 else fullMoves) Nothing
-        ----
-        ----
-        --halfMoves' = if isCapture m || pieceType piece == Pawn then 0 else halfMoves + 1
+applyToBoard :: Board -> Move -> Board
+applyToBoard (Board pieces turn halfMoves fullMoves enPassant) (Castle k@(Piece King kingColor kingSquare _) r@(Piece Rook rookColor rookSquare _)) = board' 
+    where
+        board' = Board pieces' (negColor turn) (halfMoves + 1) (if turn == Black then fullMoves + 1 else fullMoves) Nothing
+        --
+        mv :: Piece -> PieceType -> Piece
+        mv p@(Piece tp cl (Square _ r) _) side = Piece tp cl (Square (getCol p side) r) True
+        --
+        kingCol, rookCol :: PieceType -> Int
+        kingCol side = if side == King then 6 else 2
+        rookCol side = if side == King then 5 else 3
+        getCol :: Piece -> PieceType -> Int
+        getCol piece = if pieceType piece == King then kingCol else rookCol
+        --
+        castleSide :: PieceType
+        castleSide = if 0 == (col $ pos r) then Queen else King
+        pieces' :: [Piece]
+        pieces' = (filter (\p -> not $ p `elem` [k, r]) pieces) ++ [mv k castleSide, mv r castleSide]
 
+applyToBoard (Board pieces turn halfMoves fullMoves enPassant) m@(Promotion piece square capturing promotion) = board'
+    where
+        board' = Board pieces' (negColor turn) (halfMoves') (if turn == Black then fullMoves + 1 else fullMoves) Nothing
+        --
+        toRemove = piece : (maybeToList capturing)
+        newPiece = Piece promotion (color piece) square True
+        pieces'  = newPiece : (filter (\p -> not $ p `elem` toRemove) pieces)
+        --
+        halfMoves' = if isCapture m || pieceType piece == Pawn then 0 else halfMoves + 1
+
+applyToBoard (Board pieces turn halfMoves fullMoves enPassant) m@(Move piece square capturing) = board'
+    where
+        board' = Board pieces' (negColor turn) (halfMoves') (if turn == Black then fullMoves + 1 else fullMoves) Nothing
+        --
+        toRemove = piece : (maybeToList capturing)
+        newPiece = Piece (pieceType piece) (color piece) square True
+        pieces'  = newPiece : (filter (\p -> not $ p `elem` toRemove) pieces)
+        --
+        halfMoves' = if isCapture m || pieceType piece == Pawn then 0 else halfMoves + 1
 
 --allowedMoves :: Board -> Piece -> [Move]
 
