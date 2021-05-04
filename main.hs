@@ -5,28 +5,40 @@ import Data.Char (ord, digitToInt)
 
 -- Starts the game. The white pieces begin.
 chesskell :: IO()
-chesskell = runGame makeBoard White
+chesskell = runGame makeBoard 
 
 -- Main game loop, run game alternating through playing colors.
-runGame :: Board -> Color -> IO()
-runGame board currentColor = do
+runGame :: Board -> IO()
+runGame board | isDraw board      = putStrLn(pretty board) >> putStrLn "Draw" 
+              | inCheckMate board = putStrLn(pretty board) >> putStrLn "Mate"
+              | otherwise = do 
   putStrLn(pretty board)
   nextMove <- getLine
-  let b2 = applyToBoard board (strToMove board currentColor nextMove)
-  runGame b2 (negColor currentColor)
+  let mv = strToMove board nextMove in 
+    if validMove mv board
+    then runGame (applyToBoard board mv) 
+    else error "Invalid Move"
 
 -- Converts the input string to a Move to be applied to a Board afterwards
 ---- format: Pe2-e4 (pawn on e2 goes to e4)
 ------------ Ng1-f3 (knight on g1 goes to f3)
 ------------ Nf3xe5 (knight on f3 captures whatever piece is on e5) 
 ---- notice that the x is used when a capture happens and a - when just moving.
-strToMove :: Board -> Color -> String -> Move 
-strToMove b c s = Move (Piece p c origin False) destination pieceCapturing
+strToMove :: Board -> String -> Move 
+strToMove b s = Move piece destination pieceCapturing
   where
+    c = turn b
     p = parsePiece (head s)
     origin = parsePosition (s !! 1) (s !! 2)
     destination = parsePosition (s !! 4) (s !! 5)
     pieceCapturing = parseCapture (s !! 3) b ((s !! 4),(s !! 5))
+    piece = case checkSquare b origin of
+                    Nothing -> error "There isn't any piece in that square"
+                    Just pc -> if color pc == c && pieceType pc == p then pc else error "Invalid Piece"
+
+-- Check if Move is valid
+validMove :: Move -> Board -> Bool
+validMove move board = move `elem` (allMoves board)
 
 -- Given a char, return a piecetype.
 parsePiece :: Char -> PieceType

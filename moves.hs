@@ -9,6 +9,7 @@ import Data.List (find)
 data Move = Move { piece :: Piece, square :: Square, capturing :: Maybe Piece }                              |
             Promotion { piece :: Piece, square :: Square, capturing :: Maybe Piece, promotion :: PieceType } |
             Castle { king :: Piece, rook :: Piece }
+            deriving Eq
 
 instance Show Move where
     show (Move piece square capture) = show (pieceType piece) ++ (if isNothing capture then "" else "x") ++ (show square)
@@ -99,7 +100,7 @@ isDraw board = (inStaleMate board) || insufficientMaterial || (halfMove board >=
             [(Queen, 0), (Rook, 0), (Bishop, bishops), (Knight, knights), (Pawn, 0)]  -> (bishops <= 1 && knights == 0) || (bishops == 0 && knights <= 2)
             _ -> False
         --
-        insufficientMaterial = False
+        insufficientMaterial = (checkMaterial whites) && (checkMaterial blacks)
 
 isCapture :: Move -> Bool
 isCapture (Castle _ _) = False
