@@ -84,7 +84,22 @@ inCheckMate :: Board -> Bool
 inCheckMate board = (inCheck board $ turn board) && (0 == (length $ allMoves board))
 
 inStaleMate :: Board -> Bool
-inStaleMate board = (inCheck board $ turn board) && (0 <  (length $ allMoves board))
+inStaleMate board = (not $ inCheck board $ turn board) && (0 == (length $ allMoves board))
+
+isDraw :: Board -> Bool
+isDraw board = (inStaleMate board) || insufficientMaterial || (halfMove board >= 50)
+    where
+        pcs = pieces board
+        whites = filter isWhite pcs
+        blacks = filter isBlack pcs
+        --
+        count piecetype pieces = length $ filter (\p -> pieceType p == piecetype) pieces
+        pieceAmounts pieces = map (\pt -> (pt, count pt pieces)) [Queen .. Pawn]
+        checkMaterial pieces = case pieceAmounts pieces of 
+            [(Queen, 0), (Rook, 0), (Bishop, bishops), (Knight, knights), (Pawn, 0)]  -> (bishops <= 1 && knights == 0) || (bishops == 0 && knights <= 2)
+            _ -> False
+        --
+        insufficientMaterial = False
 
 isCapture :: Move -> Bool
 isCapture (Castle _ _) = False
