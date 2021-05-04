@@ -42,5 +42,30 @@ If run the game inside ghci, you'll have a bad time using backspace. We recommen
     - `Data Evaluation = Value Double | Wins Int | Draw Int | Losses Int`
     - `Data Heuristic a = Evaluate (a -> Evaluation)`
 
-# Examples
-### Example of a game start:
+# Examples - Chess Openings
+### Queen's Gambit:
+> _One of the fundamental variations of 1.d4 is the Queen's Gambit. White immediately strikes at Black's central pawn from the side. Although the c4 pawn is not guarded, this is not a 'real' gambit, since White can always get the pawn back if he wants._
+- [W] Pd2-d4
+- [B] Pd7-d5
+- [W] Pc2-c4
+<img width="324" alt="Screen Shot 2021-05-04 at 18 43 58" src="https://user-images.githubusercontent.com/24229855/117073886-f5cb0a00-ad08-11eb-81c8-afcafb403e7d.png">
+
+### Ruy Lopez
+> _The Ruy Lopez, also known as the Spanish opening, develops the kingside pieces quickly and puts pressure on the center._
+- [W] Pe2-e4
+- [B] Pe7-e5
+- [W] Ng1-f3
+- [B] Nb8-c6
+- [W] Bf1-b5
+- [B] (Most popular, but not a rule) Pa7-a6
+<img width="339" alt="Screen Shot 2021-05-04 at 18 49 47" src="https://user-images.githubusercontent.com/24229855/117074367-96b9c500-ad09-11eb-83a4-f65a4017c4d5.png">
+
+<img width="295" alt="Screen Shot 2021-05-04 at 18 50 02" src="https://user-images.githubusercontent.com/24229855/117074373-991c1f00-ad09-11eb-860b-fcf611ad4e69.png">
+
+# Example - Full Game
+At the root of this project there is a file `samplegame.txt`. It contains a chess game of 49 moves where the white pieces win. You can type the game line by line to see it developing slowly, or you can just feed the input to the game by doing:
+`./chesskell < samplegame.txt`. The final board it should produce should look like this:
+
+<img width="162" alt="Screen Shot 2021-05-04 at 19 35 19" src="https://user-images.githubusercontent.com/24229855/117078244-e602f400-ad0f-11eb-9af3-5903ae33cfb4.png">
+
+As we can see there is a checkmate on the black pieces' king on g8.
