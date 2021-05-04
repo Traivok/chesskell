@@ -3,6 +3,8 @@ import Board
 import Pieces
 import Data.Char (ord, digitToInt)
 
+main = chesskell
+
 -- Starts the game. The white pieces begin.
 chesskell :: IO()
 chesskell = runGame makeBoard 

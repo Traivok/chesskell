@@ -1,5 +1,13 @@
 # Chesskell
-to run this game just run:
+Take turns with your opponent and play by writing in the extended chess notation the moves you want to make.
+A wrong move makes you lose instantly, so think carefully.
+
+## Running the game
+to start the game just run:
+
+`./chesskell`
+
+If you want to run it on GHCi you can do
 
 `gchi main.hs`
 
@@ -7,10 +15,14 @@ and then inside ghci run
 
 `chesskell`
 
-This will start the main game loop. The white pieces start. Take turns with your opponent and play by writing in the extended chess notation the moves you want to make.
-A wrong move makes you lose instantly, so think carefully.
+To start the main game loop.
 
-## Things to notewhen playing
+#### Warning
+If run the game inside ghci, you'll have a bad time using backspace. We recommend using the compiled version so you can correct your typing of the moves you intend to make.
+
+## Compiling
+`ghci main.hs -o chesskell` 
+## Things to note when playing
 - The syntax for a pawn promotion is as follows:
   - for a promotion with capture, you could do: Pg7xh8=N  (pawn at g7 captures piece at h8 and gets promoted to a knight)
   - for a promotion without a capture, you could do: Pg7-g8=Q (pawn at g7 advances to g8 and gets promoted to a queen)
