@@ -4,8 +4,8 @@ import Pieces
 import Data.Char (ord, digitToInt)
 
 -- Starts the game. The white pieces begin.
-sg :: IO()
-sg = runGame makeBoard White
+chesskell :: IO()
+chesskell = runGame makeBoard White
 
 -- Main game loop, run game alternating through playing colors.
 runGame :: Board -> Color -> IO()
