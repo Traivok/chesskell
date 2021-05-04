@@ -56,11 +56,13 @@ applyToBoard (Board pieces turn halfMoves fullMoves enPassant) m@(Move piece squ
         halfMoves' = if isCapture m || pieceType piece == Pawn then 0 else halfMoves + 1
 
 allowedMoves :: Board -> Piece -> [Move]
-allowedMoves board piece = filter isValid $ pieceMoves board piece
+allowedMoves board piece = filter isValid $ castling ++ pieceMoves board piece
     where
+        rank = firstRank $ turn board
         pieceColor = color piece
         isValid :: Move -> Bool
         isValid move = let newBoard = applyToBoard board move in not $ inCheck newBoard pieceColor
+        castling = castles board piece
 
 allMoves :: Board -> [Move]
 allMoves board = concat $ map (allowedMoves board) (filter (\p -> color p == turn board) $ pieces board)

@@ -5,7 +5,7 @@ import Data.Char (ord, digitToInt)
 
 -- Starts the game. The white pieces begin.
 chesskell :: IO()
-chesskell = runGame makeBoard 
+chesskell = runGame makeCastleAvailable 
 
 -- Main game loop, run game alternating through playing colors.
 runGame :: Board -> IO()
@@ -25,6 +25,9 @@ runGame board | isDraw board      = putStrLn(pretty board) >> putStrLn "Draw"
 ------------ Nf3xe5 (knight on f3 captures whatever piece is on e5) 
 ---- notice that the x is used when a capture happens and a - when just moving.
 strToMove :: Board -> String -> Move 
+strToMove b "O-O-O" = strToCastle b 0
+strToMove b "O-O"   = strToCastle b 7
+
 strToMove b s = Move piece destination pieceCapturing
   where
     c = turn b
@@ -40,6 +43,18 @@ strToMove b s = Move piece destination pieceCapturing
 validMove :: Move -> Board -> Bool
 validMove move board = move `elem` (allMoves board)
 
+-- Fetch Castle
+strToCastle :: Board -> Int -> Move
+strToCastle b rookCol = Castle king rook
+    where
+        rank = firstRank $ turn b
+        king = case checkSquare b (Square 4 rank) of
+            Nothing -> error "Invalid castle"
+            Just k  -> k
+        rook = case checkSquare b (Square rookCol rank) of
+            Nothing -> error "Invalid castle"
+            Just r  -> r
+ 
 -- Given a char, return a piecetype.
 parsePiece :: Char -> PieceType
 parsePiece c
