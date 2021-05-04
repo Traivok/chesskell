@@ -24,20 +24,24 @@ runGame board | isDraw board      = putStrLn(pretty board) >> putStrLn "Draw"
 ------------ Ng1-f3 (knight on g1 goes to f3)
 ------------ Nf3xe5 (knight on f3 captures whatever piece is on e5) 
 ---- notice that the x is used when a capture happens and a - when just moving.
+---- for pawn promotions, the format is a bit different
+------ for a promotion with capture, one would do: Pg7xh8=N  (pawn at g7 captures piece at h8 and gets promoted to a knight)
+------ for a promotion without a capture, one would do: Pg7-g8=Q (pawn at g7 advances to g8 and gets promoted to a queen)
 strToMove :: Board -> String -> Move 
 strToMove b "O-O-O" = strToCastle b 0
 strToMove b "O-O"   = strToCastle b 7
-
-strToMove b s = Move piece destination pieceCapturing
-  where
-    c = turn b
-    p = parsePiece (head s)
-    origin = parsePosition (s !! 1) (s !! 2)
-    destination = parsePosition (s !! 4) (s !! 5)
-    pieceCapturing = parseCapture (s !! 3) b ((s !! 4),(s !! 5))
-    piece = case checkSquare b origin of
-                    Nothing -> error "There isn't any piece in that square"
-                    Just pc -> if color pc == c && pieceType pc == p then pc else error "Invalid Piece"
+strToMove b s
+  | length s == 8 && s !! 6 == '=' = Promotion piece destination pieceCapturing (parsePiece (s !! 7))
+  | otherwise = Move piece destination pieceCapturing
+    where
+      c = turn b
+      p = parsePiece (head s)
+      origin = parsePosition (s !! 1) (s !! 2)
+      destination = parsePosition (s !! 4) (s !! 5)
+      pieceCapturing = parseCapture (s !! 3) b ((s !! 4),(s !! 5))
+      piece = case checkSquare b origin of
+                      Nothing -> error "There isn't any piece in that square"
+                      Just pc -> if color pc == c && pieceType pc == p then pc else error "Invalid Piece"
 
 -- Check if Move is valid
 validMove :: Move -> Board -> Bool
