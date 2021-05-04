@@ -31,7 +31,8 @@ If run the game inside ghci, you'll have a bad time using backspace. We recommen
   - Rh8-h4 _(Rook at H8 moves to H4)_
   - Ra1xa6  _(Rook at A1 captures whatever enemy piece is standing at A6)_
   - Qd2xg4 _(Queen at D2 captures whatever enemy piece is standing at G4)_
-
+- You can indicate that a move is a check by appending + to the end of the move that will put the opponent's king in check. E.g.: Qh5-g5+ _(Queen on h5 moves to g5 and puts the opponent's king in check)_
+- You can indicate that a move is a checkmate by appending ++ to the end of the move that will put the opponent's king in checkmate. E.g.: Qc8xd8++ _(Queen on c8 captures piece on d8 and puts the opponent's king in checkmate)_
 ## Things we are not proud of
 - moves.hs is a complete mess. It works, but we focused too much on getting it working and not on code optimization/legibility. Since the project had a short deadline, we left the moves.hs in that horrendous state.
 
@@ -41,6 +42,7 @@ If run the game inside ghci, you'll have a bad time using backspace. We recommen
   - For that we tought about the following data structures, which would represent the value of the piece and how many turns would require to result in a win/draw/loss:
     - `Data Evaluation = Value Double | Wins Int | Draw Int | Losses Int`
     - `Data Heuristic a = Evaluate (a -> Evaluation)`
+- We would like to use the parser we learned in class instead of the simple parser we used at main.hs. We implemented the parser but we ended up not using it due to lack of time.
 
 # Examples - Chess Openings
 ### Queen's Gambit:
