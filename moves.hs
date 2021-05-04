@@ -54,7 +54,7 @@ applyToBoard (Board pieces turn halfMoves fullMoves enPassant) m@(Move piece squ
         pieces'  = newPiece : (filter (\p -> not $ p `elem` toRemove) pieces)
         --
         halfMoves' = if isCapture m || pieceType piece == Pawn then 0 else halfMoves + 1
-
+---------------------------------------------------------------------------
 allowedMoves :: Board -> Piece -> [Move]
 allowedMoves board piece = filter isValid $ castling ++ pieceMoves board piece
     where
@@ -63,10 +63,10 @@ allowedMoves board piece = filter isValid $ castling ++ pieceMoves board piece
         isValid :: Move -> Bool
         isValid move = let newBoard = applyToBoard board move in not $ inCheck newBoard pieceColor
         castling = castles board piece
-
+---------------------------------------------------------------------------
 allMoves :: Board -> [Move]
 allMoves board = concat $ map (allowedMoves board) (filter (\p -> color p == turn board) $ pieces board)
-
+---------------------------------------------------------------------------
 threats :: Board -> Color -> [Move]
 threats board attackerColor = filter captures $ concat $ map (pieceMoves board) $ filter (\p -> color p == attackerColor) $ pieces board
     where 
@@ -74,7 +74,7 @@ threats board attackerColor = filter captures $ concat $ map (pieceMoves board) 
         captures (Move p square (Just cap))        = color p == attackerColor
         captures (Promotion p square (Just cap) _) = color p == attackerColor
         captures _                                 = False
-
+---------------------------------------------------------------------------
 inCheck :: Board -> Color -> Bool
 inCheck board kingColor = isJust $ find findMyKing $ threats board $ negColor kingColor
     where 
@@ -82,13 +82,13 @@ inCheck board kingColor = isJust $ find findMyKing $ threats board $ negColor ki
         findMyKing (Move      p square (Just (Piece King _ _ _))   ) = True 
         findMyKing (Promotion p square (Just (Piece King _ _ _)) _ ) = True 
         findMyKing _                                                 = False
-
+---------------------------------------------------------------------------
 inCheckMate :: Board -> Bool
 inCheckMate board = (inCheck board $ turn board) && (0 == (length $ allMoves board))
-
+---------------------------------------------------------------------------
 inStaleMate :: Board -> Bool
 inStaleMate board = (not $ inCheck board $ turn board) && (0 == (length $ allMoves board))
-
+---------------------------------------------------------------------------
 isDraw :: Board -> Bool
 isDraw board = (inStaleMate board) || insufficientMaterial || (halfMove board >= 50)
     where
@@ -103,7 +103,7 @@ isDraw board = (inStaleMate board) || insufficientMaterial || (halfMove board >=
             _ -> False
         --
         insufficientMaterial = (checkMaterial whites) && (checkMaterial blacks)
-
+---------------------------------------------------------------------------
 isCapture :: Move -> Bool
 isCapture (Castle _ _) = False
 isCapture move        = isJust $ capturing move
@@ -120,6 +120,7 @@ attacks (Board pcs t hm fm ep) attackerColor target = filter captures $ concat $
         captures (Move p square (Just cap))        = square == target && color p == attackerColor
         captures (Promotion p square (Just cap) _) = square == target && color p == attackerColor
         captures _                                 = False
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 -- Private Functions

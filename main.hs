@@ -5,7 +5,7 @@ import Data.Char (ord, digitToInt)
 
 -- Starts the game. The white pieces begin.
 chesskell :: IO()
-chesskell = runGame makeCastleAvailable 
+chesskell = runGame makeBoard 
 
 -- Main game loop, run game alternating through playing colors.
 runGame :: Board -> IO()
