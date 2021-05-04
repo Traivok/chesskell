@@ -54,7 +54,7 @@ instance Show PieceType where
     show = fromJust . (flip lookup [(King, "K"), (Queen, "Q"), (Rook, "R"), (Bishop, "B"), (Knight, "N"), (Pawn, "P")])
 -------------------------------------------------------------------------- 
 data Color = White | Black
-    deriving (Eq, Enum)
+    deriving (Eq, Enum, Show)
 
 negColor :: Color -> Color
 negColor White = Black

@@ -48,7 +48,7 @@ checkSquare :: Board -> Square -> Maybe Piece
 checkSquare board square = find (\piece -> pos piece == square) $ pieces board
 ----------------------------------------------------------------------------------------------
 pretty :: Board -> String
-pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer
+pretty board = unlines $ header:(pretty' 7 $ pieces board) ++ footer ++ [(show (turn board)) ++ "'s Turn: "]
     where
         header = "  _ _ _ _ _ _ _ _"
         footer = ["  a b c d e f g h", printStatus board] 
