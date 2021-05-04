@@ -15,7 +15,7 @@ A wrong move makes you lose instantly, so think carefully.
 ### Example of a game start:
 Starting game:
 
-![image](https://user-images.githubusercontent.com/24229855/116952410-fad47e80-ac60-11eb-8067-906e2508e6e9.png)
+![image](https://user-images.githubusercontent.com/24229855/116952698-a978bf00-ac61-11eb-9f80-3b853f8a395e.png)
 
 [WHITE] Knight on g1 moves to f3
 
