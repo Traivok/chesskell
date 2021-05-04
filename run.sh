@@ -1,2 +1,2 @@
 #!/bin/bash
-ghci pieces.hs moves.hs board.hs parser.hs
+ghci pieces.hs moves.hs board.hs parser.hs main.hs
