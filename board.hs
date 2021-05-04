@@ -107,6 +107,8 @@ printStatus board = concat $ intersperse " " [wOrB, cas, pass, half, full]
         bcas = fmap toLower $ show $ castleStatus board Black 
         cas  = if wcas == "" && bcas == "" then "-" else wcas ++ bcas
 -----------------------------------------------------------------------------------------------
+-- Constant Boards
+-----------------------------------------------------------------------------------------------
 emptyBoard :: Board
 emptyBoard = Board [] White 0 1 Nothing 
 

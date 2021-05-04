@@ -54,7 +54,15 @@ applyToBoard (Board pieces turn halfMoves fullMoves enPassant) m@(Move piece squ
         --
         halfMoves' = if isCapture m || pieceType piece == Pawn then 0 else halfMoves + 1
 
---allowedMoves :: Board -> Piece -> [Move]
+allowedMoves :: Board -> Piece -> [Move]
+allowedMoves board piece = filter isValid $ pieceMoves board piece
+    where
+        pieceColor = color piece
+        isValid :: Move -> Bool
+        isValid move = let newBoard = applyToBoard board move in not $ inCheck newBoard pieceColor
+
+allMoves :: Board -> [Move]
+allMoves board = concat $ map (allowedMoves board) (filter (\p -> color p == turn board) $ pieces board)
 
 threats :: Board -> Color -> [Move]
 threats board attackerColor = filter captures $ concat $ map (pieceMoves board) $ filter (\p -> color p == attackerColor) $ pieces board
@@ -72,9 +80,26 @@ inCheck board kingColor = isJust $ find findMyKing $ threats board $ negColor ki
         findMyKing (Promotion p square (Just (Piece King _ _ _)) _ ) = True 
         findMyKing _                                                 = False
 
--- inCheckMate :: Board -> Color -> Bool
--- inCheck && allowedMoves == []
--- staleMate = allowerdMoves = [] && (not inCheck)
+inCheckMate :: Board -> Bool
+inCheckMate board = (inCheck board $ turn board) && (0 == (length $ allMoves board))
+
+inStaleMate :: Board -> Bool
+inStaleMate board = (not $ inCheck board $ turn board) && (0 == (length $ allMoves board))
+
+isDraw :: Board -> Bool
+isDraw board = (inStaleMate board) || insufficientMaterial || (halfMove board >= 50)
+    where
+        pcs = pieces board
+        whites = filter isWhite pcs
+        blacks = filter isBlack pcs
+        --
+        count piecetype pieces = length $ filter (\p -> pieceType p == piecetype) pieces
+        pieceAmounts pieces = map (\pt -> (pt, count pt pieces)) [Queen .. Pawn]
+        checkMaterial pieces = case pieceAmounts pieces of 
+            [(Queen, 0), (Rook, 0), (Bishop, bishops), (Knight, knights), (Pawn, 0)]  -> (bishops <= 1 && knights == 0) || (bishops == 0 && knights <= 2)
+            _ -> False
+        --
+        insufficientMaterial = False
 
 isCapture :: Move -> Bool
 isCapture (Castle _ _) = False
